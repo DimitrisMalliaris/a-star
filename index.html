@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Εργασία Τεχνητή Νοημοσύνη - Α*</title>
+    <title>Α* Coon</title>
     <meta charset="utf-8">
     <link rel ="stylesheet" href="style.css">
 </head>
@@ -376,7 +376,7 @@
         }
         function Draw_Path(cell){
             cell.Show("cyan");
-            cell.Put(🦝);
+            cell.Put("🦝");
             if(cell.parent != undefined ){
                 Draw_Path(cell.parent);
             }
