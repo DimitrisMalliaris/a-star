@@ -376,6 +376,7 @@
         }
         function Draw_Path(cell){
             cell.Show("cyan");
+            cell.Put(🦝);
             if(cell.parent != undefined ){
                 Draw_Path(cell.parent);
             }
@@ -395,6 +396,9 @@
                     return;
                 }
                 document.getElementById(this.row+','+this.column).style.backgroundColor = col;
+            }
+            this.Put = function(text){
+                document.getElementById(this.row+','+this.column).innerHTML = text;
             }
             this.showf = function(){
                 if(!fscorevisible){
