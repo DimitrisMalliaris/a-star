@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Εργασία Τεχνητή Νοημοσύνη - Α*</title>
+    <meta charset="utf-8">
+    <link rel ="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="menu_container">
+        <fieldset class="Options">
+            <legend><u>Options</u></legend>
+            <div class="options_container">
+                <label>Rows:</label>
+                <input id="rows" type="number" placeholder="Number of Rows">
+                <label>Columns:</label>
+                <input id="columns" type="number" placeholder="Number of Columns">
+                <label for="interval">Intervals:</label>
+                <input id="interval" type="number" placeholder="Enter interval between node check (ms)" value="20">
+
+                <input type="checkbox" id="fvalues">
+                <label for="fvalues">Show f scores</label>
+                <input type="checkbox" id="diagonal">
+                <label for="diagonal">Move diagonally</label>
+                <input type="checkbox" id="autopath" checked>
+                <label for="autopath">Auto Pathfinding</label>
+            </div>
+        </fieldset>
+        <fieldset class="Controls">
+            <legend><u>Controls</u></legend>
+            <label><b>Left click:</b> Obstacle</label><br>
+            <label><b>Ctrl + L.Click:</b> Start</label><br>
+            <label><b>Shift + L.Click:</b> End</label><br><br>
+            <div class="legends">            
+                <label>Obstacle</label><table><td style="background-color: gray;"></td></table>
+                <label>Start</label><table><td style="background-color: black;">Start</td></table>
+                <label>End</label><table><td style="background-color: black;">End</td></table>
+                <label>Open Set</label><table><td style="background-color: green;"></td></table>
+                <label>Closed Set</label><table><td style="background-color: red;"></td></table>
+                <label>Optimal Path</label><table><td style="background-color: cyan;"></td></table>
+                <label>Valid Move</label><table><td style="background-color: azure;"></td></table>
+            </div>
+
+        </fieldset>
+        <fieldset class="Instructions">
+            <legend><u>Instructions</u></legend>
+            <ol>
+                <li>First, create a map of your desired size, by entering the number of rows and columns and clicking on the <b>'Create Map'</b> button.</li>
+                <li>You can select wether you would like the f score of each node to be visible, by checking the <b>'Show f scores'</b> checkbox.</li>
+                <li>You can also allow the algorith to move diagonally by checking the <b>'Move diagonally'</b> checkbox.</li>
+                <li>Additionally, you can customize the map you have created by following the <b>'Controls'</b> instructions.</li>
+                <li>By clicking on the <b>'Randomize'</b> button, you will randomly create obstacles for the pathfinder.</li>
+                <li>Lastly, click on the <b>'Path Find!'</b> button and have fun. (Don't forget to assign the <b>Start</b> and <b>End</b> nodes)</li>
+            </ol>
+            <ul><li>If 'Auto Pathfinding' is selected, the algorith will start as soon as there is a start and an end point on the map. (Reassigning these points will automatically restart the algorith.)</li></ul>
+        </fieldset>
+    </div>
+    <br>
+    <button id="submit" type="button">Create Map</button>
+    <button id="randomize" type="button">Randomize</button>
+    <button id="reset" type="button">Clear Map</button>
+    <button id="pathfinder" type="button"><b>Path Find!</b></button>
+    <table id = "map"></table>
+
+    <input type="hidden" id="lock" value='0'>
+    
+    <div>Created by Dimitris Malliaris. 2020</div>
+    
+    <!--Ajax library--> 
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <!--MAP CREATION--> 
+    <script>
+        //
+        // Button clicks
+        //
+        document.getElementById("submit").onclick = function() {
+            if(document.getElementById("lock").value === '0'){
+                CreateMap();
+            }
+        }
+        document.getElementById("reset").onclick = function() {
+            if(document.getElementById("lock").value === '0'){
+                ClearMap();
+            }
+        }
+        document.getElementById("pathfinder").onclick = function() {
+            if(document.getElementById("lock").value === '0'){
+                PathFind();
+            }
+        }
+        document.getElementById("randomize").onclick = function() {
+            if(document.getElementById("lock").value === '0'){
+                Randomize();
+            }
+        }
+        //
+        // Global variables
+        //
+        var rows = 0;
+        var columns = 0;
+        var startx = "";
+        var starty = "";
+        var endx = "";
+        var endy = "";
+        var cntrlIsPressed = false;
+        var shiftIsPressed = false;
+        //
+        // Methods
+        //
+        // Key press (for shift and ctrl)
+        $(document).on('keyup keydown', function(e)
+        {
+            shiftIsPressed = e.shiftKey; 
+            cntrlIsPressed = e.ctrlKey;
+        });
+        // Create Map
+        function CreateMap ()
+        {
+            // Get rows and columns
+            rows = document.getElementById("rows").value;
+            columns = document.getElementById("columns").value;
+            // check values
+            if(rows == 0 || columns == 0){
+                alert("Please enter correct values");
+                return;
+            }
+            // Create table 
+            var str = "";
+            for(var i = 0; i < rows; i++){
+                str += "<tr>";
+                for(var j = 0; j < columns; j++){
+                    str += "<td onclick='CellClick(" + i + "," + j + ");' id =" + i + "," + j + ">  </td>";
+                }
+                str += "<tr>";
+            }
+            document.getElementById("map").innerHTML = str;
+        }
+        // Create random obstacle 
+        function Randomize(){
+            // iterate
+            for(var i = 0; i < columns; i++){
+                for( var j = 0 ; j < rows; j++){
+                    // Randomly create obstacle 20% chance
+                    if(Math.random() < 0.2){
+                        document.getElementById(j+','+i).style.backgroundColor = "gray";
+                    }
+                }
+            }
+        }
+        // Reset map
+        function ClearMap(){
+            // iterate
+            for(var i = 0; i < columns; i++){
+                for( var j = 0 ; j < rows; j++){
+                    // restore default
+                    document.getElementById(j+','+i).style.backgroundColor = "azure";
+                    document.getElementById(j+','+i).innerHTML = "";
+                    document.getElementById(j+','+i).style.color = "black";
+                }
+            }
+            // restore global variables
+            startx = "";
+            starty = "";
+            endx = "";
+            endy = "";
+        }
+        // Map cell click
+        function CellClick(r,c)
+        {
+            if(document.getElementById("lock").value === '1'){
+                return;
+            }
+            // Check if cntrl is pressed (ASSIGN START)
+            if(cntrlIsPressed){
+                // get START coordinates
+                var id = starty + ',' + startx;
+                // Clear previous START
+                if(id != ","){
+                    document.getElementById(id).style.backgroundColor = "azure";
+                    document.getElementById(id).style.color = "black";
+                    document.getElementById(id).innerHTML = "";
+                }
+                // Assign new START
+                startx = c;
+                starty = r;
+                id = starty + ',' + startx;
+                document.getElementById(id).style.backgroundColor = "black";
+                document.getElementById(id).innerHTML = "Start";
+                document.getElementById(id).style.color = "white";
+
+                // IF AUTOPATH equals TRUE RUN METHOD
+                if(document.getElementById("autopath").checked){
+                    PathFind();
+                }
+            }
+            // Check if shift is pressed (ASSIGN END)
+            else if(shiftIsPressed){
+                // get END coordinates
+                var id = endy + ',' + endx;
+                // Clear previous END
+                if(id != ","){
+                    document.getElementById(id).style.backgroundColor = "azure";
+                    document.getElementById(id).style.color = "black";
+                    document.getElementById(id).innerHTML = "";
+                }
+                // Assign new END
+                endx = c;
+                endy = r;
+                id = endy + ',' + endx;
+                document.getElementById(id).style.backgroundColor = "black";
+                document.getElementById(id).innerHTML = "End";
+                document.getElementById(id).style.color = "white";
+
+                // IF AUTOPATH = TRUE RUN METHOD
+                if(document.getElementById("autopath").checked){
+                    PathFind();
+                }
+            }
+            // Create/Remove Obstacle
+            else{
+                if(document.getElementById(r+','+c).style.backgroundColor == "gray"){
+                    document.getElementById(r+','+c).style.backgroundColor = "azure";
+                }
+                else{
+                    document.getElementById(r+','+c).style.backgroundColor = "gray";
+                }
+            }
+        }
+    </script>
+    <!--A*--> 
+    <script async>
+        //
+        // Global Variables
+        //
+        var openList;
+        var closedList;
+        var endingCell;
+        var startingCell;
+        var interval;
+        var currentCell;
+        var diagonally;
+        var fscorevisible;
+        var grid;
+
+        // Heuristic calculating method
+        function heuristic(from, to){
+            var d1 = Math.abs(to.column - from.column);
+            var d2 = Math.abs(to.row - from.row);
+            return d1 + d2;
+        }
+        async function PathFind(){
+            // Set lock
+            document.getElementById("lock").value = 1;
+            var result = await A_Star();
+            if(result){
+                alert('Done!');
+            }
+            // Unset lock
+            document.getElementById("lock").value = 0;
+        }
+        async function A_Star(){
+            // Get currentCell options
+            interval = document.getElementById("interval").value;
+            if(interval == undefined){
+                interval = 20;
+            }
+            diagonally = document.getElementById("diagonal").checked;
+            fscorevisible = document.getElementById("fvalues").checked;
+            // Check if START/END point is assigned
+            if(startx==="" || starty==="" || endx==="" || endy===""){
+                if(!document.getElementById("autopath").checked){
+                    alert('Assign start and end position.');
+                }
+                return;
+            }
+            // Clear map except obstacles / start / end points
+            for(var i = 0; i< columns; i++){
+                for(var j = 0; j< rows; j++){
+                    id = j + ',' + i;
+                    if(document.getElementById(id).style.backgroundColor==="black"){
+                        continue;
+                    }
+                    document.getElementById(id).innerHTML="";
+                    if(document.getElementById(id).style.backgroundColor==="gray"){
+                        continue;
+                    }
+                    document.getElementById(id).style.backgroundColor="azure";
+                }
+            }
+            grid = CreateGrid();
+            // Create open/close lists
+            openList = [];
+            closedList = [];
+            // Set Start/End cell
+            endingCell = grid[endx][endy];
+            startingCell = grid[startx][starty];
+            startingCell.g = 0;
+            startingCell.f = heuristic(startingCell, endingCell);
+            // Add Starting cell to the open list
+            openList.push(startingCell);
+            // Set Starting Cell as currentCell point
+            currentCell = startingCell;
+            // Loop
+            while(openList.length > 0){
+                // Iterate openlist to find smallest fscore
+                var currentCellIndex = 0;
+                var lowestfscore = Infinity;
+                for(var i = 0; i < openList.length; i++){
+                    if(openList[i].f<lowestfscore){
+                        currentCell = openList[i];
+                        lowestfscore = currentCell.f;
+                        currentCellIndex = i;
+                    }
+                }
+                // Stop if current is goal
+                if(currentCell === endingCell){
+                    ColorTiles();
+                    return true;
+                }
+                // remove from openlist - add to closed list
+                openList.splice(currentCellIndex, 1);
+                closedList.push(currentCell);
+                // Find neighbors
+                currentCell.addNeighbors();
+                var neighbors = currentCell.neighbors;
+                var diagonalNeighbors = currentCell.diagonalNeighbors;
+                // Calculate Neighbors' g,h,f
+                UpdateNeigbors(neighbors, 1);
+                UpdateNeigbors(diagonalNeighbors, Math.sqrt(2));
+                // Update colors of tiles
+                ColorTiles();
+                await sleep(interval);
+            }
+            alert('Cannot find path.');
+            return false;
+        }
+        function UpdateNeigbors(neighbors, movementCost){
+            for(var i = 0; i < neighbors.length; i++){
+                if(closedList.includes(neighbors[i]) || neighbors[i].wall)
+                {
+                    continue;
+                }
+                var tentative_gScore = currentCell.g + movementCost;
+                if(tentative_gScore < neighbors[i].g){
+                    neighbors[i].g = tentative_gScore;
+                    neighbors[i].f = neighbors[i].g + heuristic(neighbors[i], endingCell);
+                    neighbors[i].parent = currentCell;
+                    neighbors[i].showf();
+                    if(!openList.includes(neighbors[i])){
+                        openList.push(neighbors[i]);
+                    }
+                }
+            }
+        }
+        function ColorTiles(){
+            for(var i = 0; i < openList.length; i++){
+                openList[i].Show("green");
+            }
+            for(var i = 0; i < closedList.length; i++){
+                closedList[i].Show("red");
+            }
+            Draw_Path(currentCell);
+        }
+        function CreateGrid(){
+            // Create grid
+            var grid = [columns];
+            for(var i = 0; i< columns; i++){
+                grid[i] = new Array();
+            }
+            // Fill out grid with cells
+            for(var i = 0; i< columns; i++){
+                for(var j = 0; j< rows; j++){
+                    grid[i][j] = new Cell(i,j);
+                }
+            }
+            return grid;
+        }
+        function Draw_Path(cell){
+            cell.Show("cyan");
+            if(cell.parent != undefined ){
+                Draw_Path(cell.parent);
+            }
+        }
+        function Cell(column,row){
+            this.column = column;
+            this.row = row;
+            this.f = Infinity;
+            this.g = Infinity;
+            this.h = 0;
+            this.parent = undefined;
+            this.diagonalNeighbors = [];
+            this.neighbors = [];
+            this.wall = (document.getElementById(this.row+','+this.column).style.backgroundColor == "gray");
+            this.Show = function(col){
+                if(document.getElementById(this.row+','+this.column).style.backgroundColor === "black"){
+                    return;
+                }
+                document.getElementById(this.row+','+this.column).style.backgroundColor = col;
+            }
+            this.showf = function(){
+                if(!fscorevisible){
+                    return;
+                }
+                if(document.getElementById(this.row+','+this.column).style.backgroundColor === "black"){
+                    return;
+                }
+                document.getElementById(this.row+','+this.column).innerHTML = this.f.toFixed(2);
+            }
+            this.addNeighbors = function(){
+                if(this.column < columns - 1){
+                    this.neighbors.push(grid[this.column + 1][this.row]);
+                }
+                if(this.column > 0){
+                    this.neighbors.push(grid[this.column - 1][this.row]);
+                }
+                if(this.row < rows - 1){
+                    this.neighbors.push(grid[this.column][this.row + 1]);
+                }
+                if(this.row > 0){
+                    this.neighbors.push(grid[this.column][this.row - 1]);
+                }
+                // continue if diagonally is checked
+                if(!diagonally){
+                    return;
+                }
+                if(this.column > 0 && this.row > 0){
+                    this.diagonalNeighbors.push(grid[this.column - 1][this.row - 1]);
+                }
+                if(this.column > 0 && this.row < rows - 1){
+                    this.diagonalNeighbors.push(grid[this.column - 1][this.row + 1]);
+                }
+                if(this.column < columns - 1 && this.row > 0){
+                    this.diagonalNeighbors.push(grid[this.column + 1][this.row - 1]);
+                }
+                if(this.column < columns - 1 && this.row < rows - 1){
+                    this.diagonalNeighbors.push(grid[this.column + 1][this.row + 1]);
+                }
+            }
+        }
+        // sleep method
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+    </script>
+</body>
