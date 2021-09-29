@@ -240,6 +240,7 @@
         var diagonally;
         var fscorevisible;
         var grid;
+        var pathFound;
 
         // Heuristic calculating method
         function heuristic(from, to){
@@ -248,6 +249,7 @@
             return d1 + d2;
         }
         async function PathFind(){
+            pathFound = false;
             // Set lock
             document.getElementById("lock").value = 1;
             var result = await A_Star();
@@ -313,6 +315,7 @@
                 }
                 // Stop if current is goal
                 if(currentCell === endingCell){
+                    pathFound = true;
                     ColorTiles();
                     return true;
                 }
@@ -376,7 +379,9 @@
         }
         function Draw_Path(cell){
             cell.Show("cyan");
-            cell.Put("🦝");
+            if(pathFound === true){
+                cell.Put("🦝");
+            }
             if(cell.parent != undefined ){
                 Draw_Path(cell.parent);
             }
